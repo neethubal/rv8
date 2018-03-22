@@ -12,7 +12,7 @@ BIN_DIR =       $(BUILD_DIR)/$(ARCH)/bin
 LIB_DIR =       $(BUILD_DIR)/$(ARCH)/lib
 OBJ_DIR =       $(BUILD_DIR)/$(ARCH)/obj
 DEP_DIR =       $(BUILD_DIR)/$(ARCH)/dep
-DEST_DIR =      /usr/local
+DEST_DIR =      /home/neethu/workspace/local/rv8-new
 
 # check which c++ compiler to use (default clang). e.g. make prefer_gcc=1
 ifeq ($(CXX),)
@@ -402,6 +402,8 @@ MMAP_MACOS_SRCS =   $(SRC_DIR)/mem/mmap-macos.c $(SRC_DIR)/mem/mmap-core.c
 MMAP_MACOS_OBJS =   $(call cc_src_objs, $(MMAP_MACOS_SRCS))
 MMAP_MACOS_LIB =    $(LIB_DIR)/mmap-macos.dylib
 
+SNIPER_SIFT_LIB = ../sniper/sift/libsift.a -lbz2 -lz
+
 # source and binaries
 ALL_CXX_SRCS = $(RV_ASM_SRCS) \
            $(RV_ELF_SRCS) \
@@ -642,15 +644,15 @@ $(RV_BIN_BIN): $(RV_BIN_OBJS) $(RV_ASM_LIB) $(RV_ELF_LIB) $(RV_UTIL_LIB)
 	@mkdir -p $(shell dirname $@) ;
 	$(call cmd, LD $@, $(LD) $^ $(LDFLAGS) -o $@)
 
-$(RV_JIT_BIN): $(RV_JIT_OBJS) $(RV_ASM_LIB) $(RV_ELF_LIB) $(RV_UTIL_LIB) $(ASMJIT_LIB) $(MMAP_LIB)
+$(RV_JIT_BIN): $(RV_JIT_OBJS) $(RV_ASM_LIB) $(RV_ELF_LIB) $(RV_UTIL_LIB) $(ASMJIT_LIB) $(MMAP_LIB) $(SNIPER_SIFT_LIB)
+	@mkdir -p $(shell dirname $@) ;
+	$(call cmd, LD $@, $(LD) $^ $(SNIPER_SIFT_LIB) $(LDFLAGS) $(SNIPER_SIFT_LIB) $(MMAP_FLAGS) -o $@)
+
+$(RV_SIM_BIN): $(RV_SIM_OBJS) $(RV_ASM_LIB) $(RV_ELF_LIB) $(RV_UTIL_LIB) $(MMAP_LIB) $(SNIPER_SIFT_LIB)
 	@mkdir -p $(shell dirname $@) ;
 	$(call cmd, LD $@, $(LD) $^ $(LDFLAGS) $(MMAP_FLAGS) -o $@)
 
-$(RV_SIM_BIN): $(RV_SIM_OBJS) $(RV_ASM_LIB) $(RV_ELF_LIB) $(RV_UTIL_LIB) $(MMAP_LIB)
-	@mkdir -p $(shell dirname $@) ;
-	$(call cmd, LD $@, $(LD) $^ $(LDFLAGS) $(MMAP_FLAGS) -o $@)
-
-$(RV_SYS_BIN): $(RV_SYS_OBJS) $(RV_ASM_LIB) $(RV_ELF_LIB) $(RV_UTIL_LIB)
+$(RV_SYS_BIN): $(RV_SYS_OBJS) $(RV_ASM_LIB) $(RV_ELF_LIB) $(RV_UTIL_LIB) $(SNIPER_SIFT_LIB)
 	@mkdir -p $(shell dirname $@) ;
 	$(call cmd, LD $@, $(LD) $^ $(LDFLAGS) -o $@)
 
@@ -666,7 +668,7 @@ $(TEST_ENDIAN_BIN): $(TEST_ENDIAN_OBJS)
 	@mkdir -p $(shell dirname $@) ;
 	$(call cmd, LD $@, $(LD) $^ $(LDFLAGS) -o $@)
 
-$(TEST_JIT_BIN): $(TEST_JIT_OBJS) $(RV_ASM_LIB) $(RV_ELF_LIB) $(RV_UTIL_LIB) $(ASMJIT_LIB) $(MMAP_LIB)
+$(TEST_JIT_BIN): $(TEST_JIT_OBJS) $(RV_ASM_LIB) $(RV_ELF_LIB) $(RV_UTIL_LIB) $(ASMJIT_LIB) $(MMAP_LIB) $(SNIPER_SIFT_LIB)
 	@mkdir -p $(shell dirname $@) ;
 	$(call cmd, LD $@, $(LD) $^ $(LDFLAGS) -o $@)
 

@@ -5,6 +5,9 @@
 #ifndef rv_processor_impl_h
 #define rv_processor_impl_h
 
+#include "../../../sniper/sift/sift_format.h"
+#include "../../../sniper/sift/sift_writer.h"
+
 namespace riscv {
 
 	/* Interpreter Exit Causes */

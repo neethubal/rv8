@@ -47,6 +47,7 @@ namespace riscv {
 		rv_inst_cache_ent inst_cache[inst_cache_size];
 		TraceLookup lookup_trace_fast;
 		mmu_ops ops;
+		Sift::Writer *output;
 
 		jit_runloop() : jit_runloop(std::make_shared<debug_cli<P>>()) {}
 		jit_runloop(std::shared_ptr<debug_cli<P>> cli) : cli(cli), inst_cache(), ops{
@@ -128,7 +129,29 @@ namespace riscv {
 			/* create trace lookup and load store functions */
 			create_trace_lookup();
 			create_load_store();
+			create_sift_writer();
 		}
+
+		static void getCode(uint8_t *dst, const uint8_t *src, uint32_t size)
+		{
+			printf ("dummy");
+		}
+
+		void create_sift_writer()
+		{
+			char filename[1024] = "rv8.sift";
+			// typedef void getCode(uint8_t *dst, const uint8_t *src, uint32_t size);
+			// Writer(const char *filename, GetCodeFunc getCodeFunc, bool useCompression = false, const char *response_filename = "", uint32_t id = 0, bool arch32 = false, bool requires_icache_per_insn = false, bool send_va2pa_mapping = false);
+            output = new Sift::Writer(filename, getCode, false, "", 0, false, false, false);
+            printf("Sift Writer created\n");
+        }
+
+		void close_sift_writer()
+		{
+			output->End();
+			delete output;  
+        }
+
 
 		void create_trace_lookup()
 		{

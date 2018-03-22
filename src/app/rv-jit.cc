@@ -182,6 +182,9 @@ struct rv_jit_emulator
 			{ "-l", "--log-instructions", cmdline_arg_type_none,
 				"Log Instructions",
 				[&](std::string s) { return (proc_logs |= (proc_log_inst | proc_log_trap)); } },
+			{ "-sift", "--log-sift", cmdline_arg_type_none,
+				"Log in SIFT format",
+				[&](std::string s) { return (proc_logs |= (proc_log_inst | proc_log_trap | proc_log_operands | proc_log_jit_trace)); } },
 			{ "-o", "--log-operands", cmdline_arg_type_none,
 				"Log Instructions and Operands",
 				[&](std::string s) { return (proc_logs |= (proc_log_inst | proc_log_trap | proc_log_operands)); } },
@@ -322,6 +325,7 @@ struct rv_jit_emulator
 		/* Initialize and run the processor */
 		proc.init();
 		proc.run(proc.log & proc_log_ebreak_cli ? exit_cause_cli : exit_cause_continue);
+		proc.close_sift_writer();
 		proc.destroy();
 	}
 
