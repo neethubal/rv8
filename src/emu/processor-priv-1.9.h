@@ -734,6 +734,7 @@ core {
 
 		typename P::ux inst_priv(typename P::decode_type &dec, typename P::ux pc_offset)
 		{
+			printf("[src\\emu\\processor-priv-1.9.h]\tinst_priv %d\n",dec.op);
 			switch (dec.op) {
 				case rv_op_csrrw:     return inst_csr(dec, csr_rw, dec.imm, P::ireg[dec.rs1], pc_offset);
 				case rv_op_csrrs:     return inst_csr(dec, csr_rs, dec.imm, P::ireg[dec.rs1], pc_offset);
@@ -780,7 +781,9 @@ core {
 					return pc_offset;
 				case rv_op_fence_i:
 					return pc_offset;
-				default: break;
+				default:
+					printf("[src\\emu\\processor-priv-1.9.h]\tinst_priv - Illegal instruction %d\n",dec.op);
+					break;
 			}
 			return -1; /* illegal instruction */
 		}

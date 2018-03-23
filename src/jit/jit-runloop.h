@@ -125,33 +125,12 @@ namespace riscv {
 
 			/* processor initialization */
 			P::init();
+			output = P::create_sift_writer();
 
 			/* create trace lookup and load store functions */
 			create_trace_lookup();
 			create_load_store();
-			create_sift_writer();
 		}
-
-		static void getCode(uint8_t *dst, const uint8_t *src, uint32_t size)
-		{
-			printf ("dummy");
-		}
-
-		void create_sift_writer()
-		{
-			char filename[1024] = "rv8.sift";
-			// typedef void getCode(uint8_t *dst, const uint8_t *src, uint32_t size);
-			// Writer(const char *filename, GetCodeFunc getCodeFunc, bool useCompression = false, const char *response_filename = "", uint32_t id = 0, bool arch32 = false, bool requires_icache_per_insn = false, bool send_va2pa_mapping = false);
-            output = new Sift::Writer(filename, getCode, false, "", 0, false, false, false);
-            printf("Sift Writer created\n");
-        }
-
-		void close_sift_writer()
-		{
-			output->End();
-			delete output;  
-        }
-
 
 		void create_trace_lookup()
 		{
@@ -202,6 +181,7 @@ namespace riscv {
 
 		typename P::ux inst_fence_i(typename P::decode_type &dec, typename P::ux pc_offset)
 		{
+			printf("[src\\jit\\jit-runloop.h]\tinside inst_fence_i %d\n", dec.op);
 			switch(dec.op) {
 				case rv_op_fence:
 					/* nop */
@@ -209,7 +189,9 @@ namespace riscv {
 				case rv_op_fence_i:
 					clear_trace_cache();
 					return pc_offset;
-				default: break;
+				default:
+					printf("[src\\jit\\jit-runloop.h]\tinst_fence_i - Illegal instruction%d\n", dec.op);
+					break;
 			}
 			return -1; /* illegal instruction */
 		}
@@ -542,8 +524,10 @@ namespace riscv {
 				if (!P::running) return exit_cause_poweroff;
 			}
 
+			printf("[src\\jit\\jit-runloop.h]\tStart: step the processor.. \n");
 			/* step the processor */
 			while (P::instret != inststop) {
+				printf("[src\\jit\\jit-runloop.h]\tIN: step() - %llu | %llu\n",P::instret,inststop);
 				if ((P::log & proc_log_jit_trap) && jit_exec(*this, P::pc)) {
 					continue;
 				}
@@ -566,12 +550,15 @@ namespace riscv {
 						 (new_offset = inst_fence_i(dec, pc_offset)) != typename P::ux(-1) ||
 						 (new_offset = P::inst_priv(dec, pc_offset)) != typename P::ux(-1))
 				{
-					if (P::log & ~(proc_log_hist_pc | proc_log_jit_trap)) P::print_log(dec, inst);
+					if (P::log & ~(proc_log_hist_pc | proc_log_jit_trap))
+						P::print_log_PSift(output, dec, inst);
+					//if (P::log & ~(proc_log_hist_pc | proc_log_jit_trap)) P::print_log(dec, inst);
 					P::pc += new_offset;
 					P::instret++;
 				} else {
 					P::raise(rv_cause_illegal_instruction, P::pc);
 				}
+				printf("[src\\jit\\jit-runloop.h]\tOUT: step() - %llu \n\n",P::instret);
 			}
 			return exit_cause_continue;
 		}

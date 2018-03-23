@@ -19,13 +19,43 @@ namespace riscv {
 		addr_t imageoffset;
 		addr_t imagebase;
 		std::string stats_dirname;
+		Sift::Writer *output;
 
 		const char* name() { return "rv-sim"; }
 
-		void init() {}
+		void init() {
+			printf("[src\\emu\\processor-proxy.h]\tProcessor Init\n");
+			#ifdef DEBUG_ENABLED
+				printf("My error message");
+			#endif
+		}
+
+		static void getCode(uint8_t *dst, const uint8_t *src, uint32_t size)
+		{
+			int flag=0;
+		}
+
+		Sift::Writer* create_sift_writer()
+		{
+			char filename[1024] = "rv8.sift";
+			// typedef void getCode(uint8_t *dst, const uint8_t *src, uint32_t size);
+			// Writer(const char *filename, GetCodeFunc getCodeFunc, bool useCompression = false, const char *response_filename = "", uint32_t id = 0, bool arch32 = false, bool requires_icache_per_insn = false, bool send_va2pa_mapping = false);
+            output = new Sift::Writer(filename, getCode, false, "", 0, false, false, false);
+            printf("[src\\emu\\processor-proxy.h]\tSift Writer created\n");
+			return output;
+		}
+
+		void close_sift_writer()
+		{
+			output->End();
+			delete output;
+			printf("[src\\emu\\processor-proxy.h]\tSift Writer closed\n");
+		}
 
 		void destroy()
 		{
+			printf("[src\\emu\\processor-proxy.h]\tProcessor Destroy\n");
+			close_sift_writer();
 			/* Unmap memory segments */
 			for (auto &seg: P::mmu.mem->segments) {
 				guest_munmap(seg.first, seg.second);
@@ -34,6 +64,7 @@ namespace riscv {
 
 		void exit(int rc)
 		{
+			printf("[src\\emu\\processor-proxy.h]\tinside exit()\n");
 			if (P::log & proc_log_exit_log_stats) {
 
 				/* reopen console if necessary */
@@ -98,6 +129,8 @@ namespace riscv {
 					histogram_inst_save(*this, filename);
 				}
 			}
+			destroy();
+			printf("[src\\emu\\processor-proxy.h]\tExit from processor-proxy\n");
 		}
 
 		static inline int elf_p_flags_mmap(int v)
@@ -388,10 +421,12 @@ namespace riscv {
 
 		typename P::ux inst_priv(typename P::decode_type &dec, typename P::ux pc_offset)
 		{
+			printf("[src\\emu\\processor-proxy.h]\tinside inst_priv()\n");
 			switch (dec.op) {
 				case rv_op_fence:
 				case rv_op_fence_i: return pc_offset;
-				case rv_op_ecall:  proxy_syscall(*this); return pc_offset;
+				case rv_op_ecall:  printf("[src\\emu\\processor-proxy.h]\tcalling proxy_syscall %d\n",this->ireg[rv_ireg_a7]);
+								   proxy_syscall(*this); return pc_offset;
 				case rv_op_csrrw:  return inst_csr(dec, csr_rw, dec.imm, P::ireg[dec.rs1], pc_offset);
 				case rv_op_csrrs:  return inst_csr(dec, csr_rs, dec.imm, P::ireg[dec.rs1], pc_offset);
 				case rv_op_csrrc:  return inst_csr(dec, csr_rc, dec.imm, P::ireg[dec.rs1], pc_offset);

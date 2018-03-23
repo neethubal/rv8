@@ -218,6 +218,7 @@ namespace riscv {
 		}
 
 		addr_t inst_exec(T &dec, addr_t pc_offset) {
+			printf("[src\\emu\\processor-model.h]\tprocessor_rv64imafdc_model inst_exec %d\n", dec.op);
 			return exec_inst_rv64<RV_IMAFDC>(dec, *this, pc_offset);
 		}
 	};

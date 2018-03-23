@@ -220,6 +220,7 @@ struct rv_emulator
 	template <typename P>
 	void start_proxy()
 	{
+		printf("[src\\app\\rv-sim.cc]\tEnter start_proxy\n");
 		/* setup floating point exception mask */
 		fenv_init();
 
@@ -241,8 +242,11 @@ struct rv_emulator
 
 		/* Initialize and run the processor */
 		proc.init();
+		printf("[src\\app\\rv-sim.cc]\tCalling proc.run \n");
 		proc.run(proc.log & proc_log_ebreak_cli ? exit_cause_cli : exit_cause_continue);
+		printf("[src\\app\\rv-sim.cc]\tBack after proc.run \n");
 		proc.destroy();
+		printf("[src\\app\\rv-sim.cc]\tExit start_proxy\n");
 	}
 
 	/* Start a specific processor implementation based on ELF type */

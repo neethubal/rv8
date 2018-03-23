@@ -286,6 +286,7 @@ struct rv_jit_emulator
 	template <typename P>
 	void start_jit()
 	{
+		printf("[src\\app\\rv-jit.cc]\tStart start_jit\n");
 		/* setup floating point exception mask */
 		fenv_init();
 
@@ -324,9 +325,11 @@ struct rv_jit_emulator
 
 		/* Initialize and run the processor */
 		proc.init();
+		printf("[src\\app\\rv-jit.cc]\tCalling proc.run \n");
 		proc.run(proc.log & proc_log_ebreak_cli ? exit_cause_cli : exit_cause_continue);
-		proc.close_sift_writer();
+		printf("[src\\app\\rv-jit.cc]\tBack after proc.run \n");
 		proc.destroy();
+		printf("[src\\app\\rv-jit.cc]\tExit start_jit\n");
 	}
 
 	/* Start a specific processor implementation based on ELF type */

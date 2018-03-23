@@ -1,4 +1,5 @@
 build
+output
 doc/tex/riscv-instructions.tex
 doc/tex/riscv-instructions.log
 doc/tex/riscv-instructions.aux

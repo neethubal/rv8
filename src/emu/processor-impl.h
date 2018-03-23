@@ -5,6 +5,7 @@
 #ifndef rv_processor_impl_h
 #define rv_processor_impl_h
 
+#include "meta.h"
 #include "../../../sniper/sift/sift_format.h"
 #include "../../../sniper/sift/sift_writer.h"
 
@@ -258,6 +259,67 @@ namespace riscv {
 				std::string op_args = (P::log & proc_log_operands) ? format_operands(dec) : std::string();
 				printf(P::xlen == 32 ? fmt_32 : P::xlen == 64 ? fmt_64 : fmt_128,
 					P::instret, P::hart_id, addr_t(P::pc), format_inst(inst).c_str(), args.c_str(), op_args.c_str());
+				fesetexceptflag(&flags, FE_ALL_EXCEPT);
+			}
+			if (P::log & proc_log_int_reg) print_int_registers();
+		}
+
+		bool isBranch(decode_type &dec)
+		{
+			bool res = false;
+			switch (dec.op) {
+				case rv_op_beq:		/* Branch Equal */
+				case rv_op_bne:		/* Branch Not Equal */
+				case rv_op_blt:		/* Branch Less Than */
+				case rv_op_bge:		/* Branch Greater than Equal */
+				case rv_op_bltu:	/* Branch Less Than Unsigned */
+				case rv_op_bgeu:	/* Branch Greater than Equal Unsigned */
+				case rv_op_beqz:	/* Branch if = zero */
+				case rv_op_bnez:	/* Branch if ≠ zero */
+				case rv_op_blez:	/* Branch if ≤ zero */
+				case rv_op_bgez:	/* Branch if ≥ zero */
+				case rv_op_bltz:	/* Branch if < zero */
+				case rv_op_bgtz:	/* Branch if > zero */
+				case rv_op_ble:
+				case rv_op_bleu:
+				case rv_op_bgt:
+				case rv_op_bgtu:
+					res = true;
+					break;
+				default:
+					res = false;
+					break;
+			}
+			return res;
+		}
+
+		void print_log_PSift(Sift::Writer *output, decode_type &dec, inst_t inst)
+		{
+			printf ("[src\\emu\\processor-impl.h]\tinside print_log_PSift\n");
+			static const char *fmt_32 = "%019llu core-%-4zu:%08llx (%s) %-30s %s\n";
+			static const char *fmt_64 = "%019llu core-%-4zu:%016llx (%s) %-30s %s\n";
+			static const char *fmt_128 = "%019llu core-%-4zu:%032llx (%s) %-30s %s\n";
+			if (P::log & proc_log_hist_reg) histogram_add_regs(dec);
+			if (P::log & proc_log_hist_inst) histogram_add_inst(dec);
+			if (P::log & proc_log_inst) {
+				std::fexcept_t flags;
+				fegetexceptflag(&flags, FE_ALL_EXCEPT);
+				if (!(P::log & proc_log_no_pseudo)) decode_pseudo_inst(dec);		// src/asm/disasm.h
+				if (symlookup) printf("%32s ", symlookup(P::pc));
+				std::string args = disasm_inst_simple(dec);
+				std::string op_args = (P::log & proc_log_operands) ? format_operands(dec) : std::string();
+				printf(P::xlen == 32 ? fmt_32 : P::xlen == 64 ? fmt_64 : fmt_128,
+					P::instret, P::hart_id, addr_t(P::pc), format_inst(inst).c_str(), args.c_str(), op_args.c_str());
+				uint64_t addr           =       addr_t(P::pc);
+				uint8_t size            =       1;
+				uint8_t num_addresses 	= 		1;
+				uint64_t addresses[4];
+				bool is_branch          =       isBranch(dec);
+				bool taken              =       0;
+				bool is_predicate       =       0;
+				bool executed           =       1;
+				printf("[src\\emu\\processor-impl.h]\tINSTR :: %llu instformat=%s args=%s dec.op=%d isBranch=%d\n", inst,rv_inst_format[dec.op],args.c_str(),dec.op,is_branch);
+				output->Instruction(addr, size, num_addresses, addresses, is_branch, taken, is_predicate, executed);
 				fesetexceptflag(&flags, FE_ALL_EXCEPT);
 			}
 			if (P::log & proc_log_int_reg) print_int_registers();
