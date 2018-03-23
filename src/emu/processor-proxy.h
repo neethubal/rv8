@@ -47,8 +47,10 @@ namespace riscv {
 
 		void close_sift_writer()
 		{
-			output->End();
-			delete output;
+			if(output!=NULL) {				
+				output->End();
+				delete output;
+			}
 			printf("[src\\emu\\processor-proxy.h]\tSift Writer closed\n");
 		}
 
