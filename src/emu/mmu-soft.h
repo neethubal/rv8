@@ -220,6 +220,7 @@ namespace riscv {
 
 			/* translate to physical (raises exception on fault) */
 			addr_t mpa = translate_addr<P,op>(proc, va, tlb_ent);
+			printf("load: %x \n",mpa);
 			if (!mpa) return;
 
 			/* check read permissions and perform load */
@@ -242,6 +243,7 @@ namespace riscv {
 
 			/* translate to physical (raises exception on fault) */
 			addr_t mpa = translate_addr<P,op>(proc, va, tlb_ent);
+			printf("store: %x \n",mpa);
 			if (!mpa) return;
 
 			/* check write permissions and perform store */

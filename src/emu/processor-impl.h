@@ -293,7 +293,76 @@ namespace riscv {
 			return res;
 		}
 
-		void print_log_PSift(Sift::Writer *output, decode_type &dec, inst_t inst)
+		bool isMemoryOp(decode_type &dec)
+		{
+			bool res = false;
+			switch (dec.op) {
+					//P::ireg[dec.rs1] + dec.imm
+				case rv_op_lb: 			/* Load Byte */
+				case rv_op_lh: 			/* Load Half */
+				case rv_op_lw: 			/* Load Word */
+				case rv_op_lbu: 		/* Load Byte Unsigned */
+				case rv_op_lhu: 		/* Load Half Unsigned */
+				case rv_op_lwu: 		/* Load Word Unsigned */
+				case rv_op_ld: 			/* Load Double */
+				case rv_op_flw: 		/* FP Load (SP) */
+				case rv_op_fld: 		/* FP Load (DP) */
+				case rv_op_sb: 			/* Store Byte */
+				case rv_op_sh: 			/* Store Half */
+				case rv_op_sw: 			/* Store Word */
+				case rv_op_sd: 			/* Store Double */
+				case rv_op_fsw: 		/* FP Store (SP) */
+				case rv_op_fsd: 		/* FP Store (DP) */
+					//P::ireg[dec.rs1]
+				case rv_op_lr_w: 	 	/* Load Reserved Word */
+				case rv_op_lr_d: 		/* Load Reserved Double Word */
+				case rv_op_sc_w: 		/* Store Conditional Word */
+				case rv_op_sc_d: 		/* Store Conditional Double Word */
+					res = true; 
+					break;
+				default:
+					res = false;
+					break;
+			}
+			return res;
+		}
+
+		uint64_t getAddress(decode_type &dec)
+		{
+			uint64_t addr ;
+			printf("dec.op = %d\n",dec.op);
+			switch (dec.op) {
+				case rv_op_lb: 			/* Load Byte */
+				case rv_op_lh: 			/* Load Half */
+				case rv_op_lw: 			/* Load Word */
+				case rv_op_lbu: 		/* Load Byte Unsigned */
+				case rv_op_lhu: 		/* Load Half Unsigned */
+				case rv_op_lwu: 		/* Load Word Unsigned */
+				case rv_op_ld: 			/* Load Double */
+				case rv_op_flw: 		/* FP Load (SP) */
+				case rv_op_fld: 		/* FP Load (DP) */
+				case rv_op_sb: 			/* Store Byte */
+				case rv_op_sh: 			/* Store Half */
+				case rv_op_sw: 			/* Store Word */
+				case rv_op_sd: 			/* Store Double */
+				case rv_op_fsw: 		/* FP Store (SP) */
+				case rv_op_fsd: 		/* FP Store (DP) */
+					addr = P::ireg[dec.rs1] + dec.imm;
+					break;
+				case rv_op_lr_w: 	 	/* Load Reserved Word */
+				case rv_op_lr_d: 		/* Load Reserved Double Word */
+				case rv_op_sc_w: 		/* Store Conditional Word */
+				case rv_op_sc_d: 		/* Store Conditional Double Word */
+					addr = P::ireg[dec.rs1]; 
+					break;
+				default:
+					printf("No such instruction!");
+					break;
+			}
+			return addr;
+		}
+
+		void print_log_PSift(Sift::Writer *output, decode_type &dec, inst_t inst, int new_offset)
 		{
 			printf ("[src\\emu\\processor-impl.h]\tinside print_log_PSift\n");
 			static const char *fmt_32 = "%019llu core-%-4zu:%08llx (%s) %-30s %s\n";
@@ -310,15 +379,33 @@ namespace riscv {
 				std::string op_args = (P::log & proc_log_operands) ? format_operands(dec) : std::string();
 				printf(P::xlen == 32 ? fmt_32 : P::xlen == 64 ? fmt_64 : fmt_128,
 					P::instret, P::hart_id, addr_t(P::pc), format_inst(inst).c_str(), args.c_str(), op_args.c_str());
+				
 				uint64_t addr           =       addr_t(P::pc);
-				uint8_t size            =       1;
+				uint8_t size            =       inst_length(inst);
 				uint8_t num_addresses 	= 		1;
 				uint64_t addresses[4];
+				bool is_memory          =       isMemoryOp(dec);
+				if(is_memory == true) {
+					uint64_t addr_mem = getAddress(dec);
+					addresses[0] = addr_mem;
+					printf("addr_mem => %llx\n",addr_mem);
+				}
+
 				bool is_branch          =       isBranch(dec);
 				bool taken              =       0;
+				if(is_branch == true) {
+					int nextpc_offset = intptr_t(dec.imm);
+					printf("[src\\emu\\processor-impl.h]\tIsBRANCH -> new offset = %d nextpcoffset = %d \n",new_offset,nextpc_offset);
+					if(nextpc_offset==new_offset) {
+						taken = 1;
+					}
+				}
+
 				bool is_predicate       =       0;
 				bool executed           =       1;
-				printf("[src\\emu\\processor-impl.h]\tINSTR :: %llu instformat=%s args=%s dec.op=%d isBranch=%d\n", inst,rv_inst_format[dec.op],args.c_str(),dec.op,is_branch);
+
+				printf("[src\\emu\\processor-impl.h]\t%032llx P::xlen=%d INSTR :: %llu instformat=%s args=%s dec.op=%d isBranch=%d taken=%d\n", addr_t(P::pc), size, inst,rv_inst_format[dec.op],args.c_str(),dec.op,is_branch,taken);
+				//print_int_registers();
 				output->Instruction(addr, size, num_addresses, addresses, is_branch, taken, is_predicate, executed);
 				fesetexceptflag(&flags, FE_ALL_EXCEPT);
 			}

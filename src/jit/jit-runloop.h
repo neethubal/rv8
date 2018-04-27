@@ -190,7 +190,7 @@ namespace riscv {
 					clear_trace_cache();
 					return pc_offset;
 				default:
-					printf("[src\\jit\\jit-runloop.h]\tinst_fence_i - Illegal instruction%d\n", dec.op);
+					printf("[src\\jit\\jit-runloop.h]\tinst_fence_i - Illegal instruction %d\n", dec.op);
 					break;
 			}
 			return -1; /* illegal instruction */
@@ -551,7 +551,7 @@ namespace riscv {
 						 (new_offset = P::inst_priv(dec, pc_offset)) != typename P::ux(-1))
 				{
 					if (P::log & ~(proc_log_hist_pc | proc_log_jit_trap))
-						P::print_log_PSift(output, dec, inst);
+						P::print_log_PSift(output, dec, inst, new_offset);
 					//if (P::log & ~(proc_log_hist_pc | proc_log_jit_trap)) P::print_log(dec, inst);
 					P::pc += new_offset;
 					P::instret++;

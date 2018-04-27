@@ -428,7 +428,8 @@ namespace riscv {
 				case rv_op_fence:
 				case rv_op_fence_i: return pc_offset;
 				case rv_op_ecall:  printf("[src\\emu\\processor-proxy.h]\tcalling proxy_syscall %d\n",this->ireg[rv_ireg_a7]);
-								   proxy_syscall(*this); return pc_offset;
+								   proxy_syscall(*this); 
+								   return pc_offset;
 				case rv_op_csrrw:  return inst_csr(dec, csr_rw, dec.imm, P::ireg[dec.rs1], pc_offset);
 				case rv_op_csrrs:  return inst_csr(dec, csr_rs, dec.imm, P::ireg[dec.rs1], pc_offset);
 				case rv_op_csrrc:  return inst_csr(dec, csr_rc, dec.imm, P::ireg[dec.rs1], pc_offset);

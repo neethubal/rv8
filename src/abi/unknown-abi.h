@@ -1185,6 +1185,9 @@ namespace riscv {
 	template <typename P> void proxy_syscall(P &proc)
 	{
 		printf("[src\\abi\\unknown-abi.h]\tproxy_syscall proc.ireg[rv_ireg_a7]=%d\n",proc.ireg[rv_ireg_a7]);
+		if(proc.ireg[rv_ireg_a7]==57) { // TODO : test-primes quit!
+			proc.ireg[rv_ireg_a7] = 93;
+		}
 		switch (proc.ireg[rv_ireg_a7]) {
 			case abi_syscall_getcwd:          abi_sys_getcwd(proc); break;
 			case abi_syscall_fcntl:           abi_sys_fcntl(proc); break;
